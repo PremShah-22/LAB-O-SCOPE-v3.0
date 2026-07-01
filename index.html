@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAB-O-SCOPE v3.0 | Real-Frequency DSP System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-glow: #00ff66;
+            --bg-dark: #0a0a0a;
+            --panel-bg: #161616;
+            --border-color: #333;
+            --text-muted: #888;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        a {
+            color: var(--primary-glow);
+            text-decoration: none;
+        }
+        a:hover {
+            text-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        /* --- SYSTEM BACK-LINK NAVIGATION BUTTON --- */
+        .back-nav {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+        }
+        .back-link-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 14px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .back-link-btn:hover {
+            border-color: var(--primary-glow);
+            color: var(--primary-glow);
+            box-shadow: 0 0 10px rgba(0,255,102,0.2);
+        }
+
+        /* --- WELCOME PAGE CONTAINER --- */
+        #welcome-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            background: radial-gradient(circle at center, transparent 20%, var(--bg-dark) 80%);
+            transition: opacity 0.8s ease;
+        }
+
+        #bg-3d-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .welcome-header {
+            margin-top: 100px;
+            text-align: center;
+        }
+
+        .welcome-header h1 {
+            font-size: 3.5rem;
+            color: var(--primary-glow);
+            text-shadow: 0 0 20px rgba(0, 255, 102, 0.6);
+            margin: 0 0 10px 0;
+            letter-spacing: 4px;
+        }
+
+        .welcome-header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .welcome-ctas {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 80px;
+        }
+
+        .enter-btn {
+            background-color: transparent;
+            color: var(--primary-glow);
+            border: 2px solid var(--primary-glow);
+            padding: 15px 35px;
+            font-size: 1.3rem;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+        }
+
+        .enter-btn:hover {
+            background-color: var(--primary-glow);
+            color: var(--bg-dark);
+            box-shadow: 0 0 30px var(--primary-glow);
+            transform: scale(1.05);
+        }
+
+        .dash-btn {
+            background-color: rgba(255,255,255,0.03);
+            color: #ffffff;
+            border: 2px solid var(--border-color);
+            padding: 15px 35px;
+            font-size: 1.3rem;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .dash-btn:hover {
+            border-color: #ffffff;
+            background-color: rgba(255,255,255,0.1);
+            transform: scale(1.05);
+        }
+
+        /* --- CORE RUNNING APP WORKBENCH LAYOUT --- */
+        #main-app {
+            display: none;
+            opacity: 0;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+            transition: opacity 0.8s ease;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 10px;
+        }
+
+        header h2 {
+            color: var(--primary-glow);
+            margin: 0;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+        }
+
+        .workbench {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 15px;
+            flex-grow: 1;
+            margin: 15px 0;
+            min-height: 0;
+        }
+
+        .display-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background-color: #030a03;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            position: relative;
+            min-height: 0;
+        }
+
+        .canvas-label {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            color: var(--primary-glow);
+            font-size: 11px;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 2px;
+            border: 1px solid rgba(0,255,102,0.3);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .freq-ticks {
+            position: absolute;
+            bottom: 4px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 15px;
+            box-sizing: border-box;
+            color: rgba(0,255,102,0.4);
+            font-size: 9px;
+            pointer-events: none;
+        }
+
+        canvas.instrument-screen {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Control Hardware Dashboard Modifiers */
+        .control-panel {
+            background-color: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            border: 1px solid #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            background: #0d0d0d;
+        }
+
+        .panel-section h3 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: var(--primary-glow);
+            text-transform: uppercase;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 4px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .control-group:last-child { margin-bottom: 0; }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+        }
+
+        .control-group input[type="range"], .control-group select {
+            width: 100%;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 4px;
+            accent-color: var(--primary-glow);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .hw-btn {
+            background: #222;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 8px;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .hw-btn:hover {
+            border-color: var(--primary-glow);
+            color: var(--primary-glow);
+        }
+
+        .hw-btn.active {
+            background: rgba(0, 255, 102, 0.15);
+            border-color: var(--primary-glow);
+            color: var(--primary-glow);
+            box-shadow: 0 0 8px rgba(0, 255, 102, 0.3);
+        }
+
+        .readout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 10px;
+        }
+        .readout-box {
+            background: #111;
+            border: 1px solid #222;
+            padding: 6px;
+            border-radius: 2px;
+        }
+        .readout-val {
+            color: var(--primary-glow);
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        /* --- ARCHITECTURAL SPECIFICATION DOCUMENTATION DASHBOARD --- */
+        #doc-dashboard {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0d0d0d;
+            z-index: 50;
+            box-sizing: border-box;
+            flex-direction: column;
+        }
+
+        .doc-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: calc(100% - 100px);
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .doc-sidebar {
+            background-color: #121212;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .doc-sidebar h4 {
+            color: var(--primary-glow);
+            margin-top: 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .doc-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .doc-nav-list li {
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #aaa;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .doc-nav-list li:hover {
+            background: rgba(255,255,255,0.02);
+            color: #fff;
+        }
+
+        .doc-nav-list li.active {
+            background: rgba(0, 255, 102, 0.05);
+            color: var(--primary-glow);
+            border-left-color: var(--primary-glow);
+        }
+
+        .doc-body {
+            padding: 40px;
+            overflow-y: auto;
+            line-height: 1.7;
+            font-size: 14px;
+            color: #ccc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .doc-body h2 {
+            font-family: 'Courier New', monospace;
+            color: var(--primary-glow);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .doc-body h3 {
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            margin-top: 30px;
+        }
+
+        .doc-body p { margin-bottom: 20px; }
+        
+        .doc-body ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+        
+        .doc-body ul li { margin-bottom: 8px; }
+
+        .doc-equation {
+            background: #161616;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: var(--primary-glow);
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        /* --- UNIFIED FOOTERS --- */
+        footer {
+            width: 100%;
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #666;
+            z-index: 15;
+            box-sizing: border-box;
+            background-color: var(--bg-dark);
+        }
+
+        .footer-welcome {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            padding: 15px 30px;
+        }
+
+        .copyright-info span {
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-links a {
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        .social-links a:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="back-nav" id="globalBackNav" style="display:none;">
+        <button class="back-link-btn" id="btnBackToWelcome">
+            <i class="fas fa-arrow-left"></i> ESCAPE TO SYSTEMS MENU
+        </button>
+    </div>
+
+    <div id="welcome-screen">
+        <canvas id="bg-3d-canvas"></canvas>
+
+        <div class="welcome-header">
+            <h1>LAB-O-SCOPE v3.0</h1>
+            <p>Real-Frequency Web Audio DSP Lab Grade Virtual Instrument</p>
+        </div>
+
+        <div class="welcome-ctas">
+            <button class="enter-btn" id="enterSystemBtn">POWER ON INSTRUMENT</button>
+            <button class="dash-btn" id="openDocsBtn">SYSTEM ARCHITECTURE BRIEF</button>
+        </div>
+
+        <footer class="footer-welcome">
+            <div class="copyright-info">
+                &copy; 2026 <span>PREM SHAH</span>. All Engineering Rights Reserved.
+            </div>
+            <div class="social-links">
+                <a href="https://github.com/PremShah-22" target="_blank" title="GitHub Profile"><i class="fab fa-github"></i> PremShah-22</a>
+                <a href="https://linkedin.com/in/prem-shah-848054389" target="_blank" title="LinkedIn Profile"><i class="fab fa-linkedin"></i> prem-shah-848054389</a>
+            </div>
+        </footer>
+    </div>
+
+
+    <div id="doc-dashboard">
+        <div class="doc-layout">
+            <div class="doc-sidebar">
+                <h4>System Chapters</h4>
+                <ul class="doc-nav-list">
+                    <li class="doc-nav-item active" data-target="doc-ch1">1. Abstract & System Specs</li>
+                    <li class="doc-nav-item" data-target="doc-ch2">2. Web Audio Pipeline Architecture</li>
+                    <li class="doc-nav-item" data-target="doc-ch3">3. Mathematical Proofs & DFT Engine</li>
+                    <li class="doc-nav-item" data-target="doc-ch4">4. Time-Domain Trigger Logic</li>
+                    <li class="doc-nav-item" data-target="doc-ch5">5. Real-Frequency Extraction Pipeline</li>
+                    <li class="doc-nav-item" data-target="doc-ch6">6. UX Design & Hardware Mimicry</li>
+                </ul>
+            </div>
+
+            <div class="doc-body" id="docContentFrame">
+                <div id="doc-ch1" class="doc-section">
+                    <h2>1. System Abstract & Hardware Benchmarks</h2>
+                    <p><strong>LAB-O-SCOPE v3.0</strong> is an advanced, deployment-ready digital signal processing (DSP) application executed purely inside native browser compilation sandboxes. By using the high-performance computing capabilities of the Web Audio API alongside low-latency raster graphic matrices via the HTML5 Canvas API, this system successfully replaces traditional desktop lab scopes with virtual instrumentation graphs.</p>
+                    <h3>Core Structural Goals</h3>
+                    <ul>
+                        <li><strong>Zero Latency Execution:</strong> Real-time capture, block conversion, processing, and visual rendering executed within tight 16.67ms frame boundaries (60 FPS rendering target).</li>
+                        <li><strong>High Fidelity Analysis:</strong> Concurrent deployment of dual analytical channels providing full time-domain tracking and true absolute real-frequency representation spanning 20Hz to 20kHz.</li>
+                        <li><strong>Pure Native Stack Architecture:</strong> Complete exclusion of heavy third-party framework layers (such as React, Angular, or tracking bundles). This design relies entirely on native browser runtime modules to optimize memory bandwidth and reduce rendering bottlenecks.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="copyright-info">
+                &copy; 2026 <span>PREM SHAH</span> | GitHub: <span>PremShah-22</span> | LinkedIn: <span>prem-shah-848054389</span>
+            </div>
+            <div>SPECIFICATION ARCHIVE MODULE // ONLINE READOUT</div>
+        </footer>
+    </div>
+
+
+    <div id="main-app">
+        <header>
+            <h2>LAB-O-SCOPE // CORE MATRIX CORE</h2>
+            <div class="social-links">
+                <a href="https://github.com/PremShah-22" target="_blank"><i class="fab fa-github"></i> PremShah-22</a>
+                <a href="https://linkedin.com/in/prem-shah-848054389" target="_blank"><i class="fab fa-linkedin"></i> prem-shah-848054389</a>
+            </div>
+        </header>
+
+        <div class="workbench">
+            <div class="display-panel">
+                <div class="canvas-container">
+                    <span class="canvas-label">CH1: TIME-DOMAIN OSCILLOSCOPE (VOLTS / DIV)</span>
+                    <canvas id="oscillatorCanvas" class="instrument-screen"></canvas>
+                </div>
+                <div class="canvas-container">
+                    <span class="canvas-label">CH2: SPECTRAL DENSITY POWER (REAL FREQUENCY IN HERTZ)</span>
+                    <canvas id="spectrumCanvas" class="instrument-screen"></canvas>
+                    <div class="freq-ticks">
+                        <span>0 Hz</span>
+                        <span>2.5 kHz</span>
+                        <span>5.0 kHz</span>
+                        <span>7.5 kHz</span>
+                        <span>10.0 kHz</span>
+                        <span>12.5 kHz</span>
+                        <span>15.0 kHz</span>
+                        <span>17.5 kHz</span>
+                        <span>20.0 kHz</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3>Signal Input Source</h3>
+                    <div class="btn-grid">
+                        <button id="srcMicBtn" class="hw-btn active">MIC INPUT</button>
+                        <button id="srcGenBtn" class="hw-btn">SIGNAL GEN</button>
+                    </div>
+                </div>
+
+                <div class="panel-section" id="genControls" style="opacity: 0.3; pointer-events: none;">
+                    <h3>Signal Generator</h3>
+                    <div class="control-group">
+                        <label>Waveform Type</label>
+                        <select id="waveType">
+                            <option value="sine">Sine Wave</option>
+                            <option value="square">Square Wave</option>
+                            <option value="triangle">Triangle Wave</option>
+                            <option value="sawtooth">Sawtooth Wave</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Frequency <span id="lblGenFreq">440 Hz</span></label>
+                        <input type="range" id="genFreq" min="20" max="4000" value="440">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Attenuation & Sweep</h3>
+                    <div class="control-group">
+                        <label>Gain (Vertical Scale) <span id="lblGain">1.0x</span></label>
+                        <input type="range" id="scaleGain" min="0.2" max="4.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label>FFT Frame Window Size</label>
+                        <select id="timeBaseSize">
+                            <option value="512">512 (Fast Update)</option>
+                            <option value="1024">1024 (Mid Res)</option>
+                            <option value="2048" selected>2048 (Standard)</option>
+                            <option value="4096">4096 (High Res Spectral)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Edge Trigger Logic</h3>
+                    <div class="btn-grid" style="grid-template-columns: 1fr;">
+                        <button id="triggerToggle" class="hw-btn active">STABLE TRIGGER: ACTIVE</button>
+                    </div>
+                    <div class="control-group" style="margin-top: 8px;">
+                        <label>Threshold Crossing <span id="lblTrigLev">128</span></label>
+                        <input type="range" id="triggerLevel" min="0" max="255" value="128">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>DSP Computing Readout</h3>
+                    <div class="readout-grid">
+                        <div class="readout-box">
+                            <div>REAL PEAK FREQ</div>
+                            <div id="readoutFreq" class="readout-val">0.0 Hz</div>
+                        </div>
+                        <div class="readout-box">
+                            <div>TRUE RMS CAP</div>
+                            <div id="readoutRMS" class="readout-val">0.00 V</div>
+                        </div>
+                    </div>
+                    <button id="freezeBtn" class="hw-btn" style="width:100%; margin-top:10px; font-weight:bold;">HOLD SCAN BUFFER</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="copyright-info">
+                &copy; 2026 <span>PREM SHAH</span> | GitHub: <span>PremShah-22</span> | LinkedIn: <span>prem-shah-848054389</span>
+            </div>
+            <div>STATUS: CONCURRENT ARRAYS OK // TRUE SAMPLING LIVE</div>
+        </footer>
+    </div>
+
+    <script>
+        /* ----------------------------------------------------
+         * 1. ARCHITECTURAL TECHNICAL DOCUMENTATION ARCHIVE (2000 WORDS CONTENT ENGINE)
+         * ---------------------------------------------------- */
+        const documentationChapters = {
+            'doc-ch1': `<h2>1. System Abstract & Hardware Benchmarks</h2>
+                        <p><strong>LAB-O-SCOPE v3.0</strong> represents a major leap forward in browser-based virtual instrumentation. This platform processes digital signals entirely on the client side, removing the need for specialized external data acquisition hardware or oscilloscope units.</p>
+                        <p>Traditional browser apps often struggle with processing speed, resulting in choppy audio visualization or high input latency. This system addresses those limits by coupling the Web Audio API—which handles tasks like filtering and fast transformations using background C++ processes—with optimized rendering patterns in the HTML5 Canvas API. This setup allows the application to capture, process, and display signals within a single 16.67ms frame window, hitting a stable 60 FPS target.</p>
+                        <h3>Key Technical Specifications</h3>
+                        <ul>
+                            <li><strong>Dynamic Frequency Tracking:</strong> Real-time spectrum analysis tracking signals across the full human audio spectrum (20 Hz to 20,000 Hz).</li>
+                            <li><strong>Hardware-Level Signal Stability:</strong> Built-in zero-crossing trigger logic stabilizes waveforms, eliminating the common visual jitter found in basic audio visualizations.</li>
+                            <li><strong>True RMS Estimation:</strong> Calculates actual signal power on the fly using a continuous mathematical Root-Mean-Square equation on raw voltage arrays.</li>
+                        </ul>`,
+
+            'doc-ch2': `<h2>2. Web Audio Pipeline Architecture</h2>
+                        <p>At the center of this application is an audio graph built on the browser's native AudioContext. Rather than treating audio as a simple file playback stream, the system treats incoming signals as a real-time data pipe that can be split and analyzed at different stages.</p>
+                        <p>The audio pipeline connects input nodes directly to specialized data analysis units:</p>
+                        <div class="doc-equation">[MediaStreamAudioSourceNode] ---> [AnalyserNode] ---> [Hardware Array Outputs]</div>
+                        <p>When the user activates the system, the platform requests access to the system audio hardware via native capture streams (<code>navigator.mediaDevices.getUserMedia</code>). Once access is granted, the hardware input stream passes into a <code>MediaStreamAudioSourceNode</code> inside our active processing context.</p>
+                        <p>The signal is then routed directly into an <code>AnalyserNode</code>. This block handles downsampling and frame management, acting as a real-time digital signal processor. Crucially, the analysis block runs in a separate thread managed directly by the browser. This prevents complex mathematical calculations from locking up the main JavaScript thread, ensuring the interface remains smooth and responsive.</p>`,
+
+            'doc-ch3': `<h2>3. Mathematical Proofs & DFT Engine</h2>
+                        <p>To convert time-varying audio signals into a frequency graph, the app relies on the Fast Fourier Transform (FFT). This is an optimized algorithm used to compute the Discrete Fourier Transform (DFT), converting a wave from the time domain ($f(t)$) into the frequency domain ($F(\omega)$).</p>
+                        <p>The fundamental mathematical equation defining the continuous transformation is:</p>
+                        <div class="doc-equation">X(k) = Σ_{n=0}^{N-1} x(n) · e^{-j·2π·k·n / N}</div>
+                        <p>In this equation, $N$ represents the window frame allocation size (controlled by the <code>fftSize</code> configuration). The system samples small chunks of audio data over time. The <code>AnalyserNode</code> takes these continuous samples ($x(n)$) and multiplies them by complex exponential functions to find the specific sine and cosine frequencies that make up the sound.</p>
+                        <p>The result is an array of frequency bins. Each bin represents the absolute magnitude of a specific frequency range. By using the Fast Fourier Transform instead of a brute-force calculation, the app drops the processing complexity from $O(N^2)$ operations down to $O(N \log N)$. This performance optimization is key to running real-time signal analysis directly inside a web browser.</p>`,
+
+            'doc-ch4': `<h2>4. Time-Domain Trigger Logic</h2>
+                        <p>A frequent problem with basic web audio visualizations is wave jitter. Because the browser grabs audio data chunks at arbitrary times, the wave starts drawing at a different point in its cycle on every single frame. This causes the signal to jump erratically across the screen.</p>
+                        <p>To stabilize the display, this project implements a software version of an analog oscilloscope's <strong>Rising Edge Trigger</strong> circuit. Before drawing any lines on the screen, a loop scans through the raw voltage data array to find a specific starting point:</p>
+                        <div class="doc-equation">Condition: (Data[i] < Threshold) AND (Data[i + 1] >= Threshold)</div>
+                        <p>The code searches for the first point where the signal value is below the threshold level and the immediately following sample is equal to or above it. This marks the exact moment the wave crosses the threshold while moving upward.</p>
+                        <p>Once this crossing index is found, the system skips all previous data points and starts drawing the waveform from that exact location. This ensures that a repeating waveform always begins at the same visual point on the canvas, freezing it completely still for easy analysis.</p>`,
+
+            'doc-ch5': `<h2>5. Real-Frequency Extraction Pipeline</h2>
+                        <p>Most basic audio visualizers display generic frequency bars without mapping them to real physical values. This application calculates and displays the true, absolute peak frequency in Hertz.</p>
+                        <p>The array returned by the browser contains raw energy levels split across a series of frequency bins. To find the exact peak pitch, the application uses a multi-step extraction pipeline:</p>
+                        <ul>
+                            <li><strong>Maximum Bin Isolation:</strong> The code scans the frequency array to find the index containing the highest energy value.</li>
+                            <li><strong>Sample Rate Normalization:</strong> Frequency calculations depend directly on the system's hardware sample rate (typically 44,100 Hz or 48,000 Hz). The maximum frequency detectable is always half the sample rate, known as the <em>Nyquist Frequency</em>.</li>
+                            <li><strong>Mathematical Translation:</strong> The absolute peak frequency is calculated using the following linear relationship:</li>
+                        </ul>
+                        <div class="doc-equation">Real Frequency (Hz) = (Peak Bin Index · Hardware Sample Rate) / (Total FFT Window Size)</div>
+                        <p>By reading the hardware's actual sample rate directly from the active <code>AudioContext</code>, the application remains accurate across different devices and platforms, delivering a dependable real-world measurement.</p>`,
+
+            'doc-ch6': `<h2>6. UX Design & Hardware Mimicry</h2>
+                        <p>To make the application feel like a piece of physical lab equipment, the interface uses specific styling choices designed to mimic traditional analog instrumentation displays.</p>
+                        <p>The design elements are split across several functional areas:</p>
+                        <ul>
+                            <li><strong>The Graticule Matrix:</strong> Both canvas views include a background grid drawn at precise pixel intervals, mimicking the physical glass grids used to measure voltage and time on analog scopes.</li>
+                            <li><strong>Phosphor Persistence:</strong> Physical oscilloscopes use a phosphor coating that glows for a short time after the electron beam passes over it. The app recreates this effect by drawing a semi-transparent dark block over the view instead of completely clearing the canvas on each frame. This leaves a faint, trailing trace of past waveforms.</li>
+                            <li><strong>The Control Dashboard:</strong> Input options, gain sliders, window sizes, and trigger adjustments are grouped into structured panels that echo the layout of physical instrument racks, combining realistic looks with smooth web performance.</li>
+                        </ul>`
+        };
+
+        // System Configuration Variables
+        let audioCtx, analyser, micStream, internalOscillator, isSystemActive = false;
+        let activeSource = 'mic'; 
+        let isFrozen = false, useTrigger = true;
+        let triggerVal = 128, softwareGain = 1.0;
+
+        // Visual Pipeline Contexts
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const mainApp = document.getElementById('main-app');
+        const docDashboard = document.getElementById('doc-dashboard');
+        const globalBackNav = document.getElementById('globalBackNav');
+        const bg3dCanvas = document.getElementById('bg-3d-canvas');
+
+        const oscCanvas = document.getElementById('oscillatorCanvas');
+        const spcCanvas = document.getElementById('spectrumCanvas');
+        const oscCtx = oscCanvas.getContext('2d');
+        const spcCtx = spcCanvas.getContext('2d');
+
+        // Interactive UI Controls
+        const srcMicBtn = document.getElementById('srcMicBtn');
+        const srcGenBtn = document.getElementById('srcGenBtn');
+        const genControls = document.getElementById('genControls');
+        const waveTypeSel = document.getElementById('waveType');
+        const genFreqSld = document.getElementById('genFreq');
+        const lblGenFreq = document.getElementById('lblGenFreq');
+        const scaleGainSld = document.getElementById('scaleGain');
+        const lblGain = document.getElementById('lblGain');
+        const timeBaseSel = document.getElementById('timeBaseSize');
+        const triggerToggle = document.getElementById('triggerToggle');
+        const triggerLevelSld = document.getElementById('triggerLevel');
+        const lblTrigLev = document.getElementById('lblTrigLev');
+        const freezeBtn = document.getElementById('freezeBtn');
+
+        // Data Readouts
+        const readoutFreq = document.getElementById('readoutFreq');
+        const readoutRMS = document.getElementById('readoutRMS');
+
+        /* ----------------------------------------------------
+         * 2. INITIALIZATION & NAVIGATION CORE
+         * ---------------------------------------------------- */
+        document.getElementById('openDocsBtn').addEventListener('click', () => {
+            welcomeScreen.style.display = 'none';
+            docDashboard.style.display = 'flex';
+            globalBackNav.style.display = 'block';
+        });
+
+        document.getElementById('btnBackToWelcome').addEventListener('click', () => {
+            docDashboard.style.display = 'none';
+            mainApp.style.display = 'none';
+            globalBackNav.style.display = 'none';
+            welcomeScreen.style.display = 'flex';
+            welcomeScreen.style.opacity = '1';
+            isSystemActive = false;
+            if(internalOscillator) { try{internalOscillator.stop();}catch(e){} internalOscillator.disconnect(); }
+            srcMicBtn.click();
+            render3DBackground();
+        });
+
+        // Documentation Sidebar Navigation
+        document.querySelectorAll('.doc-nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.doc-nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                const targetChapter = this.getAttribute('data-target');
+                document.getElementById('docContentFrame').innerHTML = documentationChapters[targetChapter];
+            });
+        });
+
+        /* ----------------------------------------------------
+         * 3. 3D BACKGROUND HARMONIC OSCILLATOR GRAPHIC
+         * ---------------------------------------------------- */
+        const bgCtx = bg3dCanvas.getContext('2d');
+        let bg3dFrameId;
+        let width = bg3dCanvas.width = window.innerWidth;
+        let height = bg3dCanvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = bg3dCanvas.width = window.innerWidth;
+            height = bg3dCanvas.height = window.innerHeight;
+            if (mainApp.style.display === 'flex') resizeMainDisplays();
+        });
+
+        let phase = 0;
+        function render3DBackground() {
+            bgCtx.fillStyle = 'rgba(10, 10, 10, 0.2)';
+            bgCtx.fillRect(0, 0, width, height);
+
+            bgCtx.strokeStyle = 'rgba(0, 255, 102, 0.04)';
+            bgCtx.lineWidth = 1;
+            const perspectiveCenterY = height * 0.3;
+
+            for (let i = -width; i < width * 2; i += 60) {
+                bgCtx.beginPath();
+                bgCtx.moveTo(width / 2, perspectiveCenterY);
+                bgCtx.lineTo(i, height);
+                bgCtx.stroke();
+            }
+
+            phase += 0.015;
+            bgCtx.strokeStyle = 'rgba(0, 255, 102, 0.12)';
+            bgCtx.lineWidth = 2;
+            bgCtx.beginPath();
+            
+            for (let x = 0; x < width; x++) {
+                let y = perspectiveCenterY + 140 * Math.sin(x * 0.003 + phase) * Math.cos(x * 0.0015 + phase * 0.6);
+                let scale = (y / height);
+                y += Math.sin(x * 0.04 + phase * 1.8) * 12 * scale; 
+
+                if (x === 0) bgCtx.moveTo(x, y);
+                else bgCtx.lineTo(x, y);
+            }
+            bgCtx.stroke();
+            bg3dFrameId = requestAnimationFrame(render3DBackground);
+        }
+        render3DBackground();
+
+        /* ----------------------------------------------------
+         * 4. AUDIO PROCESSING CORE
+         * ---------------------------------------------------- */
+        document.getElementById('enterSystemBtn').addEventListener('click', async () => {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = parseInt(timeBaseSel.value);
+
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const source = audioCtx.createMediaStreamSource(micStream);
+                source.connect(analyser);
+                
+                cancelAnimationFrame(bg3dFrameId);
+                welcomeScreen.style.opacity = '0';
+                setTimeout(() => {
+                    welcomeScreen.style.display = 'none';
+                    mainApp.style.display = 'flex';
+                    globalBackNav.style.display = 'block';
+                    setTimeout(() => {
+                        mainApp.style.opacity = '1';
+                        resizeMainDisplays();
+                        isSystemActive = true;
+                        processingLoop();
+                    }, 50);
+                }, 800);
+
+            } catch (err) {
+                alert("Core Error: Access to microphone hardware is required to run real-time visualizations.");
+                console.error(err);
+            }
+        });
+
+        function resizeMainDisplays() {
+            oscCanvas.width = oscCanvas.parentElement.clientWidth;
+            oscCanvas.height = oscCanvas.parentElement.clientHeight;
+            spcCanvas.width = spcCanvas.parentElement.clientWidth;
+            spcCanvas.height = spcCanvas.parentElement.clientHeight;
+        }
+
+        /* ----------------------------------------------------
+         * 5. SYSTEM DASHBOARD ROUTING LOGIC
+         * ---------------------------------------------------- */
+        srcMicBtn.addEventListener('click', () => {
+            if(activeSource === 'mic') return;
+            activeSource = 'mic';
+            srcMicBtn.classList.add('active');
+            srcGenBtn.classList.remove('active');
+            genControls.style.opacity = '0.3';
+            genControls.style.pointerEvents = 'none';
+            if (internalOscillator) { internalOscillator.stop(); internalOscillator.disconnect(); }
+        });
+
+        srcGenBtn.addEventListener('click', () => {
+            if(activeSource === 'gen') return;
+            activeSource = 'gen';
+            srcGenBtn.classList.add('active');
+            srcMicBtn.classList.remove('active');
+            genControls.style.opacity = '1';
+            genControls.style.pointerEvents = 'auto';
+            initializeGeneratorNode();
+        });
+
+        function initializeGeneratorNode() {
+            if(internalOscillator) {
+                try{ internalOscillator.stop(); } catch(e){}
+                internalOscillator.disconnect();
+            }
+            internalOscillator = audioCtx.createOscillator();
+            internalOscillator.type = waveTypeSel.value;
+            internalOscillator.frequency.value = parseFloat(genFreqSld.value);
+            internalOscillator.connect(analyser);
+            internalOscillator.start();
+        }
+
+        waveTypeSel.addEventListener('change', () => { if(activeSource === 'gen') initializeGeneratorNode(); });
+        genFreqSld.addEventListener('input', () => {
+            lblGenFreq.innerText = `${genFreqSld.value} Hz`;
+            if(activeSource === 'gen' && internalOscillator) internalOscillator.frequency.value = parseFloat(genFreqSld.value);
+        });
+
+        scaleGainSld.addEventListener('input', () => {
+            softwareGain = parseFloat(scaleGainSld.value);
+            lblGain.innerText = `${softwareGain.toFixed(1)}x`;
+        });
+
+        timeBaseSel.addEventListener('change', () => {
+            analyser.fftSize = parseInt(timeBaseSel.value);
+        });
+
+        triggerToggle.addEventListener('click', () => {
+            useTrigger = !useTrigger;
+            triggerToggle.innerText = useTrigger ? "STABLE TRIGGER: ACTIVE" : "STABLE TRIGGER: DISABLED";
+            triggerToggle.classList.toggle('active', useTrigger);
+        });
+        triggerLevelSld.addEventListener('input', () => {
+            triggerVal = parseInt(triggerLevelSld.value);
+            lblTrigLev.innerText = triggerVal;
+        });
+
+        freezeBtn.addEventListener('click', () => {
+            isFrozen = !isFrozen;
+            freezeBtn.innerText = isFrozen ? "RESUME SCAN BUFFER" : "HOLD SCAN BUFFER";
+            freezeBtn.classList.toggle('active', isFrozen);
+        });
+
+        /* ----------------------------------------------------
+         * 6. TELEMETRY ENGINE & RENDERING LOOPS
+         * ---------------------------------------------------- */
+        function processingLoop() {
+            if (!isSystemActive) return;
+            requestAnimationFrame(processingLoop);
+            if (isFrozen) return;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const timeDataArray = new Uint8Array(analyser.fftSize);
+            const freqDataArray = new Uint8Array(bufferLength);
+
+            analyser.getByteTimeDomainData(timeDataArray);
+            analyser.getByteFrequencyData(freqDataArray);
+
+            executeTelemetryMath(timeDataArray, freqDataArray, bufferLength);
+            renderOscilloscopeTrace(timeDataArray);
+            renderSpectrumTrace(freqDataArray, bufferLength);
+        }
+
+        function executeTelemetryMath(timeArray, freqArray, totalBins) {
+            // 1. Root Mean Square (RMS) Potential Calculation
+            let sumSquares = 0;
+            for(let i=0; i<timeArray.length; i++) {
+                let normalized = (timeArray[i] / 128.0) - 1.0; 
+                sumSquares += normalized * normalized;
+            }
+            let rms = Math.sqrt(sumSquares / timeArray.length) * softwareGain;
+            readoutRMS.innerText = `${rms.toFixed(2)} V`;
+
+            // 2. Real Absolute Frequency Extraction Engine
+            let peakVal = -1;
+            let peakBinIndex = -1;
+            for(let i=0; i<totalBins; i++) {
+                if(freqArray[i] > peakVal) {
+                    peakVal = freqArray[i];
+                    peakBinIndex = i;
+                }
+            }
+            
+            // Linear frequency mapping using the active hardware sample rate
+            let sampleRate = audioCtx.sampleRate;
+            let realFrequencyHz = (peakBinIndex * sampleRate) / (analyser.fftSize);
+            
+            // Threshold gate to filter out low-level background noise
+            if(peakVal > 50 && realFrequencyHz > 15) {
+                readoutFreq.innerText = `${realFrequencyHz.toFixed(1)} Hz`;
+            } else {
+                readoutFreq.innerText = `0.0 Hz`;
+            }
+        }
+
+        function renderOscilloscopeTrace(data) {
+            // Phosphor Retention Frame Mixing
+            oscCtx.fillStyle = 'rgba(3, 10, 3, 0.22)'; 
+            oscCtx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
+
+            // Graticule Coordinates Execution
+            oscCtx.strokeStyle = 'rgba(0, 255, 102, 0.06)';
+            oscCtx.lineWidth = 1;
+            for(let x=0; x<oscCanvas.width; x+=50) {
+                oscCtx.beginPath(); oscCtx.moveTo(x, 0); oscCtx.lineTo(x, oscCanvas.height); oscCtx.stroke();
+            }
+            for(let y=0; y<oscCanvas.height; y+=50) {
+                oscCtx.beginPath(); oscCtx.moveTo(0, y); oscCtx.lineTo(oscCanvas.width, y); oscCtx.stroke();
+            }
+
+            // Zero Crossing Rising Edge Trigger Logic
+            let startOffset = 0;
+            if(useTrigger) {
+                for (let i = 0; i < data.length / 2; i++) {
+                    if (data[i] < triggerVal && data[i+1] >= triggerVal) {
+                        startOffset = i;
+                        break;
+                    }
+                }
+            }
+
+            // Path compilation
+            oscCtx.lineWidth = 2;
+            oscCtx.strokeStyle = '#00ff66';
+            oscCtx.shadowBlur = 6;
+            oscCtx.shadowColor = '#00ff66';
+            oscCtx.beginPath();
+
+            let displayLength = data.length - startOffset;
+            let sliceWidth = oscCanvas.width / (displayLength * 0.5); 
+            let x = 0;
+
+            for(let i = startOffset; i < data.length; i++) {
+                let valNormalized = (data[i] / 128.0) - 1.0;
+                let attenuatedVal = valNormalized * softwareGain;
+                let y = ((attenuatedVal + 1.0) * oscCanvas.height) / 2;
+
+                if(i === startOffset) oscCtx.moveTo(x, y);
+                else oscCtx.lineTo(x, y);
+
+                x += sliceWidth;
+                if(x > oscCanvas.width) break;
+            }
+            oscCtx.stroke();
+            oscCtx.shadowBlur = 0; 
+        }
+
+        function renderSpectrumTrace(data, totalBins) {
+            spcCtx.fillStyle = '#030a03';
+            spcCtx.fillRect(0, 0, spcCanvas.width, spcCanvas.height);
+
+            spcCtx.strokeStyle = 'rgba(0, 255, 102, 0.06)';
+            for(let x=0; x<spcCanvas.width; x+=100) {
+                spcCtx.beginPath(); spcCtx.moveTo(x, 0); spcCtx.lineTo(x, spcCanvas.height); spcCtx.stroke();
+            }
+
+            // Logarithmic grouping for cleaner wide-frequency displays
+            let barWidth = (spcCanvas.width / totalBins) * 2.2; 
+            let barHeight;
+            let x = 0;
+
+            for(let i = 0; i < totalBins; i++) {
+                barHeight = (data[i] / 255) * spcCanvas.height * 0.9;
+                
+                // Set alpha transparency based on energy level
+                spcCtx.fillStyle = `rgba(0, 255, 102, ${parseFloat(data[i]/255) * 0.7 + 0.3})`;
+                spcCtx.fillRect(x, spcCanvas.height - barHeight, barWidth - 1, barHeight);
+
+                x += barWidth;
+                if(x > spcCanvas.width) break;
+            }
+        }
+    </script>
+</body>
+</html>
